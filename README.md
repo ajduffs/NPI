@@ -1,0 +1,1 @@
+This R script reads in a CSV of air emissions reported under the National Pollutant Inventory over the past three years. It then calculates a summary of Acetaldehyde emissions from the coal mining industry. The template could be used to determine summaries of all air emissions. Future work would look at taking a functional approach to automate the work.
