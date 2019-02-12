@@ -1,0 +1,44 @@
+library(dplyr)
+library(tidyr)
+
+#import data
+df <- read.csv(file="NPI_raw.csv", header=TRUE, sep=",")
+
+#filter by ANZSIC group to select coal miners
+df <- filter(df, ANZSIC.Group.code == 6)
+
+#at present we only want facility-ids, air point emissions and the substances emitted, so let's select these
+dfp <- select(df, Facility.ID, Substance, Air.point.emission)
+
+#we want to spread the data, but need to uniquely identify the rows first
+dfp <- dfp %>%
++     group_by(Facility.ID, Substance) %>%
++     mutate(obs = row_number())
+
+#now let's spread the data
+dfp <- spread(dfp, Substance, Air.point.emission)
+
+#we have columns with only NA in them
+#so let's only select columns if they have data
+
+dfp <- dfp %>% select_if(~sum(!is.na(.)) > 0)
+
+#we don't need dplyr's grouping anymore, so let's get rid of it to make things easier
+dfp <- ungroup(dfp)
+
+#from here we can get summaries for different air emissions in the coal industry
+#let's get the summary for acetaldehyde
+(acetaldehyde_summary <- quantile(dfp$Acetaldehyde, na.rm = TRUE))
+  0%  25%  50%  75% 100% 
+2.20 2.60 3.00 3.23 3.46 
+
+#so the minimum emission over the past 3 years is 2.20kg and the maximum emission is 3.46kg
+
+#the boxplot for acetaldehyde emissions
+boxplot(dfp$Acetaldehyde, horizontal = TRUE)
+
+#we should also calculate the number of observations these summaries are based on
+acetaldehyde_obs <- (NROW(dfp$Acetaldehyde) - (sum(is.na(dfp$Acetaldehyde`))))
+
+#from here we can create a similar summary of all air emissions in the coal industry
+#future work would look at taking a functional approach to automate the work above
